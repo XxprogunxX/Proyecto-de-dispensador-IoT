@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "477540588403",
+    "firebase_url": "https://proyecto-iot-9d46e-default-rtdb.firebaseio.com",
+    "project_id": "proyecto-iot-9d46e",
+    "storage_bucket": "proyecto-iot-9d46e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477540588403:android:be05f61a598959e4934306",
+        "android_client_info": {
+          "package_name": "com.example.dispensadoriot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI-Vtyw3mByb6foGSn0Gnw-8GinsDlyP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477540588403:android:6d66122509cdf376934306",
+        "android_client_info": {
+          "package_name": "com.example.dispesadorsmart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI-Vtyw3mByb6foGSn0Gnw-8GinsDlyP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477540588403:android:cec41185f447b26b934306",
+        "android_client_info": {
+          "package_name": "com.example.proyecto_iot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI-Vtyw3mByb6foGSn0Gnw-8GinsDlyP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

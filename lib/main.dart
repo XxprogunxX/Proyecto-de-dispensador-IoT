@@ -1,121 +1,223 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'firebase_options.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const DispensadorApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class DispensadorApp extends StatelessWidget {
+  const DispensadorApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Mi Dispensador IoT',
+      // Cambiamos el tema a modo oscuro: fondo negro y acentos azules
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.black, // Fondo completamente negro
+        cardColor: const Color(0xFF1A1A1A), // Un gris casi negro para que la tarjeta resalte un poco
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const PantallaPrincipal(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class PantallaPrincipal extends StatefulWidget {
+  const PantallaPrincipal({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<PantallaPrincipal> createState() => _PantallaPrincipalState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _PantallaPrincipalState extends State<PantallaPrincipal> {
+  final DatabaseReference _distanciaRef = FirebaseDatabase.instance.ref('comida/distancia');
+  final DatabaseReference _despacharRef = FirebaseDatabase.instance.ref('comida/despachar');
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  bool _estaSirviendo = false;
+
+  void _mostrarNotificacionEmergente() {
+    // Esta es la nueva notificación estilo ventana emergente (Pop-up)
+    showDialog(
+      context: context,
+      barrierDismissible: false, // El usuario debe tocar "Entendido" para cerrarla
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A), // Fondo oscuro para el pop-up
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.notifications_active, color: Colors.blueAccent, size: 28),
+              SizedBox(width: 10),
+              Text('¡Atención!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            ],
+          ),
+          content: const Text(
+            'Se ha enviado la orden.\nLa comida se está sirviendo ahora mismo.',
+            style: TextStyle(fontSize: 16, color: Colors.white70),
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el mensaje
+              },
+              child: const Text('Entendido'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _servirComida() async {
+    setState(() => _estaSirviendo = true);
+    try {
+      await _despacharRef.set(true);
+      
+      if (mounted) {
+        // Llamamos a la nueva función de notificación
+        _mostrarNotificacionEmergente();
+      }
+    } catch (e) {
+      debugPrint("Error de conexión: $e");
+    } finally {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _estaSirviendo = false);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Mi Dispensador Inteligente', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.blueAccent, // Azul vibrante
+        foregroundColor: Colors.white,
+        elevation: 5,
+        shadowColor: Colors.blueAccent.withOpacity(0.5),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Estado del Contenedor',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              
+              Expanded(
+                child: Card(
+                  elevation: 8,
+                  shadowColor: Colors.blueAccent.withOpacity(0.3),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  child: StreamBuilder(
+                    stream: _distanciaRef.onValue,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator(color: Colors.blueAccent));
+                      }
+                      
+                      if (snapshot.hasData && snapshot.data!.snapshot.value != null) {
+                        final distanciaStr = snapshot.data!.snapshot.value.toString();
+                        double distanciaNum = double.tryParse(distanciaStr) ?? 0;
+                        
+                        bool nivelBajo = distanciaNum > 15;
+                        
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: nivelBajo ? Colors.redAccent.withOpacity(0.2) : Colors.blueAccent.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                nivelBajo ? Icons.error_outline : Icons.check_circle_outline,
+                                size: 80,
+                                color: nivelBajo ? Colors.redAccent : Colors.blueAccent,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              '$distanciaStr cm',
+                              style: const TextStyle(fontSize: 52, fontWeight: FontWeight.w900, color: Colors.white),
+                            ),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: nivelBajo ? Colors.redAccent : Colors.blueAccent,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                nivelBajo ? 'Nivel bajo. ¡Hora de rellenar!' : 'Nivel de alimento óptimo',
+                                style: const TextStyle(
+                                  fontSize: 16, 
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return const Center(child: Text('Sin datos del sensor', style: TextStyle(color: Colors.grey)));
+                    },
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 40),
+              
+              SizedBox(
+                height: 75,
+                child: ElevatedButton.icon(
+                  onPressed: _estaSirviendo ? null : _servirComida,
+                  icon: _estaSirviendo 
+                      ? const SizedBox(
+                          width: 24, height: 24, 
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                        )
+                      : const Icon(Icons.pets, size: 30),
+                  label: Text(
+                    _estaSirviendo ? 'Sirviendo...' : 'Servir Porción',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: _estaSirviendo ? 0 : 8,
+                    shadowColor: Colors.blueAccent.withOpacity(0.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
