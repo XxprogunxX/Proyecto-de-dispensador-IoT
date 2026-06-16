@@ -19,12 +19,11 @@ class DispensadorApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Mi Dispensador IoT',
-      // Cambiamos el tema a modo oscuro: fondo negro y acentos azules
       theme: ThemeData(
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.black, // Fondo completamente negro
-        cardColor: const Color(0xFF1A1A1A), // Un gris casi negro para que la tarjeta resalte un poco
+        scaffoldBackgroundColor: Colors.black, 
+        cardColor: const Color(0xFF1A1A1A), 
       ),
       home: const PantallaPrincipal(),
     );
@@ -42,16 +41,19 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   final DatabaseReference _distanciaRef = FirebaseDatabase.instance.ref('comida/distancia');
   final DatabaseReference _despacharRef = FirebaseDatabase.instance.ref('comida/despachar');
 
+  // ALTURA TOTAL DE TU CONTENEDOR EN CENTÍMETROS
+  // Cambia este número según lo que mida físicamente el tanque donde guardas las croquetas
+  final double alturaContenedor = 20.0; 
+
   bool _estaSirviendo = false;
 
   void _mostrarNotificacionEmergente() {
-    // Esta es la nueva notificación estilo ventana emergente (Pop-up)
     showDialog(
       context: context,
-      barrierDismissible: false, // El usuario debe tocar "Entendido" para cerrarla
+      barrierDismissible: false, 
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A1A), // Fondo oscuro para el pop-up
+          backgroundColor: const Color(0xFF1A1A1A),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
             children: [
@@ -61,7 +63,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
             ],
           ),
           content: const Text(
-            'Se ha enviado la orden.\nLa comida se está sirviendo ahora mismo.',
+            'Se ha enviado la orden.\nLa comida se está sirviendo ahora mismo en el plato. 🐾',
             style: TextStyle(fontSize: 16, color: Colors.white70),
           ),
           actions: [
@@ -72,7 +74,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // Cierra el mensaje
+                Navigator.of(context).pop();
               },
               child: const Text('Entendido'),
             ),
@@ -88,7 +90,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       await _despacharRef.set(true);
       
       if (mounted) {
-        // Llamamos a la nueva función de notificación
         _mostrarNotificacionEmergente();
       }
     } catch (e) {
@@ -106,7 +107,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       appBar: AppBar(
         title: const Text('Mi Dispensador Inteligente', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent, // Azul vibrante
+        backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         elevation: 5,
         shadowColor: Colors.blueAccent.withOpacity(0.5),
@@ -118,7 +119,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Estado del Contenedor',
+                'Nivel del Tanque de Alimento',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueAccent),
                 textAlign: TextAlign.center,
               ),
@@ -140,7 +141,14 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                         final distanciaStr = snapshot.data!.snapshot.value.toString();
                         double distanciaNum = double.tryParse(distanciaStr) ?? 0;
                         
-                        bool nivelBajo = distanciaNum > 15;
+                        // Limitamos la distancia a la altura máxima del contenedor para no tener porcentajes negativos
+                        if (distanciaNum > alturaContenedor) distanciaNum = alturaContenedor;
+                        
+                        // FÓRMULA: Si la distancia es igual a la altura, está al 0%. Si la distancia es 0, está al 100%.
+                        int porcentajeLleno = ((1 - (distanciaNum / alturaContenedor)) * 100).toInt();
+                        
+                        // Consideramos "nivel bajo" si el tanque está a menos del 25% de su capacidad
+                        bool nivelBajo = porcentajeLleno < 25;
                         
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -152,17 +160,24 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                nivelBajo ? Icons.error_outline : Icons.check_circle_outline,
+                                nivelBajo ? Icons.warning_amber_rounded : Icons.check_circle_outline,
                                 size: 80,
                                 color: nivelBajo ? Colors.redAccent : Colors.blueAccent,
                               ),
                             ),
                             const SizedBox(height: 20),
+                            // Ahora mostramos el Porcentaje en grande
                             Text(
-                              '$distanciaStr cm',
-                              style: const TextStyle(fontSize: 52, fontWeight: FontWeight.w900, color: Colors.white),
+                              '$porcentajeLleno%',
+                              style: const TextStyle(fontSize: 60, fontWeight: FontWeight.w900, color: Colors.white),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 5),
+                            // Y dejamos los centímetros en chiquito como dato técnico
+                            Text(
+                              'Distancia del sensor: $distanciaStr cm',
+                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 20),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
                               decoration: BoxDecoration(
@@ -170,7 +185,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                nivelBajo ? 'Nivel bajo. ¡Hora de rellenar!' : 'Nivel de alimento óptimo',
+                                nivelBajo ? 'Tanque casi vacío. ¡Rellenar!' : 'Capacidad de alimento óptima',
                                 style: const TextStyle(
                                   fontSize: 16, 
                                   color: Colors.white,
@@ -181,7 +196,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                           ],
                         );
                       }
-                      return const Center(child: Text('Sin datos del sensor', style: TextStyle(color: Colors.grey)));
+                      return const Center(child: Text('Sin conexión al sensor', style: TextStyle(color: Colors.grey)));
                     },
                   ),
                 ),
@@ -200,7 +215,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                         )
                       : const Icon(Icons.pets, size: 30),
                   label: Text(
-                    _estaSirviendo ? 'Sirviendo...' : 'Servir Porción',
+                    _estaSirviendo ? 'Procesando...' : 'Servir al Plato',
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                   ),
                   style: ElevatedButton.styleFrom(
