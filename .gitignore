@@ -39,7 +39,101 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
+# Environment variables
+.env
+!.env.example
+
 # Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.gradle/
+/android/local.properties
+/android/app/google-services.json
+/android/gradle-wrapper.jar
+
+# iOS
+/ios/Flutter/Flutter.podspec
+/ios/Pods/
+/ios/Podfile.lock
+/ios/Flutter/Flutter.xcframework
+/ios/Flutter/Flutter.xcframework/**
+/ios/.symlinks/
+/ios/Flutter/Flutter.debug.xcconfig
+/ios/Flutter/Flutter.release.xcconfig
+/ios/Flutter/GeneratedPluginRegistrant.*
+/ios/Runner.xcworkspace/xcshareddata/
+/ios/Runner.xcworkspace/xcuserdata/
+/ios/Runner.xcodeproj/xcshareddata/
+/ios/Runner.xcodeproj/xcuserdata/
+
+# macOS
+/macos/Flutter/Flutter.podspec
+/macos/Pods/
+/macos/Podfile.lock
+/macos/Flutter/Flutter.xcframework
+/macos/.symlinks/
+/macos/Flutter/Flutter.debug.xcconfig
+/macos/Flutter/Flutter.release.xcconfig
+/macos/Flutter/GeneratedPluginRegistrant.swift
+/macos/Runner.xcworkspace/xcshareddata/
+/macos/Runner.xcworkspace/xcuserdata/
+/macos/Runner.xcodeproj/xcshareddata/
+/macos/Runner.xcodeproj/xcuserdata/
+
+# Linux
+/linux/flutter/flutter_linux/
+/linux/.dart_tool/
+/linux/build/
+
+# Windows
+/windows/flutter/flutter_windows.dll
+/windows/flutter/flutter_windows.h
+/windows/flutter/generated_plugin_registrant.cc
+/windows/flutter/generated_plugin_registrant.h
+/windows/flutter/generated_plugins.cmake
+/windows/build/
+
+# Web
+/web/canvaskit/
+/web/lib/generated_plugin_registrant.dart
+
+# IDE
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+.android/
+.classpath
+.factorypath
+.gradle/
+.java/
+.metadata
+.project
+.runconfigs
+.settings/
+.tooling/
+/out/
+
+# OS
+Thumbs.db
+*.swo
+*~
+.directory
+
+# Project specific
+pubspec.lock
+.flutter-plugins
+.packages
+
+# Secrets and credentials
+*.key
+*.pem
+*.jks
+google-services.json
+GoogleService-Info.plist
+firebase.json
+
+# Coverage
+lcov.info
+
